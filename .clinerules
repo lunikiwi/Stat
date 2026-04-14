@@ -9,3 +9,8 @@
 - **Backend:** Java/Quarkus, influxdb-client-java.
 - **Frontend:** Vue/React, TypeScript.
 - **Data:** Python, InfluxDB.
+
+## Git & Version Control (Trunk Based Development)
+- **Single Source of Truth:** Arbeite ausschließlich auf dem `main` Branch. Erstelle keine Feature-Branches, es sei denn, du wirst explizit vom User dazu aufgefordert.
+- **Continuous Integration:** Commits müssen extrem granular sein. Sobald ein TDD-Zyklus (Red -> Green -> Refactor) für eine kleine Einheit abgeschlossen ist, generiere sofort einen Commit.
+- **Commit Messages:** Nutze Conventional Commits (z.B. `feat: add influxdb connection`, `test: add unit tests for chat prompt aggregation`).
