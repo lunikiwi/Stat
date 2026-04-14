@@ -1,0 +1,17 @@
+dev\stat\chat\domain\HealthData.class
+dev\stat\chat\dto\ChatRequest.class
+dev\stat\chat\service\LlmClient.class
+dev\stat\chat\ExternalServiceExceptionMapper.class
+dev\stat\chat\dto\MetricsUsed.class
+dev\stat\chat\service\DefaultLlmClient.class
+dev\stat\chat\dto\ErrorResponse.class
+dev\stat\chat\service\ChatService.class
+dev\stat\chat\ChatResource.class
+dev\stat\chat\dto\ChatResponse.class
+dev\stat\chat\service\DefaultHealthDataClient.class
+dev\stat\chat\dto\ChatMessage.class
+dev\stat\chat\service\NutritionApiClient.class
+dev\stat\chat\service\ExternalServiceException.class
+dev\stat\chat\service\DefaultNutritionApiClient.class
+dev\stat\chat\domain\NutritionData.class
+dev\stat\chat\service\HealthDataClient.class

@@ -1,0 +1,22 @@
+#!/bin/sh
+# Maven Wrapper script - downloads Maven if not present
+# Licensed to the Apache Software Foundation (ASF)
+
+if [ -z "$MAVEN_HOME" ] ; then
+  MAVEN_HOME="$HOME/.m2/wrapper/dists/apache-maven-3.9.9"
+fi
+
+if [ ! -f "$MAVEN_HOME/bin/mvn" ] ; then
+  echo "Downloading Maven..."
+  mkdir -p "$MAVEN_HOME"
+  if command -v curl > /dev/null 2>&1 ; then
+    curl -fsSL "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz" | tar xz -C "$MAVEN_HOME" --strip-components=1
+  elif command -v wget > /dev/null 2>&1 ; then
+    wget -qO- "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz" | tar xz -C "$MAVEN_HOME" --strip-components=1
+  else
+    echo "Error: curl or wget required to download Maven" >&2
+    exit 1
+  fi
+fi
+
+exec "$MAVEN_HOME/bin/mvn" "$@"

@@ -1,0 +1,17 @@
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\ChatResource.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\domain\HealthData.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\domain\NutritionData.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\ChatMessage.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\ChatRequest.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\ChatResponse.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\ErrorResponse.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\MetricsUsed.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\ExternalServiceExceptionMapper.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\service\ChatService.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\service\DefaultHealthDataClient.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\service\DefaultLlmClient.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\service\DefaultNutritionApiClient.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\service\ExternalServiceException.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\service\HealthDataClient.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\service\LlmClient.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\service\NutritionApiClient.java
