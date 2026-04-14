@@ -1,0 +1,11 @@
+# Stat Project - Agent Rules
+
+## Workflow Standards
+1. **Spec-Driven:** Keine neuen Features ohne vorherige Spec im `/specs/` Ordner.
+2. **Test-Driven:** Kein Produktionscode ohne vorherigen Unit-Test.
+3. **Planungs-Phase:** Nutze für große, unklare Features immer zuerst das Skill-Dokument `/skills/01-grill-me.md`, um offene Fragen mit dem User zu klären, bevor eine Spec geschrieben wird.
+
+## Tech Stack Enforcement
+- **Backend:** Java/Quarkus, influxdb-client-java.
+- **Frontend:** Vue/React, TypeScript.
+- **Data:** Python, InfluxDB.
