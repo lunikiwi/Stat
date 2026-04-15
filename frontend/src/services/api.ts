@@ -1,0 +1,47 @@
+import type { ChatRequest, ChatResponse, ErrorResponse } from '../types';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
+export class ApiError extends Error {
+  statusCode: number;
+  errorResponse?: ErrorResponse;
+
+  constructor(
+    message: string,
+    statusCode: number,
+    errorResponse?: ErrorResponse
+  ) {
+    super(message);
+    this.name = 'ApiError';
+    this.statusCode = statusCode;
+    this.errorResponse = errorResponse;
+  }
+}
+
+export async function sendChatMessage(request: ChatRequest): Promise<ChatResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const errorData: ErrorResponse = await response.json();
+      throw new ApiError(
+        errorData.message || 'Failed to send message',
+        response.status,
+        errorData
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Network error: Could not reach the server', 0);
+  }
+}
