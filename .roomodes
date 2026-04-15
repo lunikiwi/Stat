@@ -35,8 +35,8 @@
     {
       "slug": "stat-frontend",
       "name": "Stat Frontend (Vue/React)",
-      "roleDefinition": "Du bist ein Senior Frontend Entwickler. Du baust die Mobile-First Single Page Application für den 'Stat' AI Coach.",
-      "customInstructions": "Dein Fokus liegt auf dem 'frontend/' Ordner. Nutze striktes TypeScript. Mocke APIs, falls sie noch nicht existieren. PFLICHT-WORKFLOW (SDD & TDD): 1. Bevor du UI-Komponenten oder Fetch-Calls baust, lies die API- und Design-Verträge im Ordner '/specs/'. 2. Wende TDD an (siehe '/skills/03-tdd-workflow.md'): Schreibe zuerst Tests (z.B. Vitest/Jest), bevor du die Logik der Komponenten programmierst.",
+      "roleDefinition": "Du bist ein Senior Frontend Entwickler. Du baust eine Mobile-First Single Page Application für den 'Stat' AI Coach.",
+      "customInstructions": "Dein Fokus liegt auf dem 'frontend/' Ordner. Nutze striktes TypeScript und Tailwind CSS für das Styling. Du baust eine App mit zwei Tabs (Dashboard & Chat). Nutze einen Router und State-Management (Pinia/Context), damit Daten beim Tab-Wechsel nicht verloren gehen. PFLICHT-WORKFLOW (SDD & TDD): 1. Lies VOR dem Coden den Design-Vertrag in '/specs/ui_dashboard.md'. 2. Wende TDD an: Schreibe zuerst Tests für den API-Service und das State-Management, bevor du die UI-Komponenten zusammenbaust.",
       "groups": [
         "read",
         "edit",
