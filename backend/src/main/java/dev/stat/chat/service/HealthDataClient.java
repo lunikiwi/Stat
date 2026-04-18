@@ -1,6 +1,7 @@
 package dev.stat.chat.service;
 
 import dev.stat.chat.domain.HealthData;
+import dev.stat.chat.domain.NutritionData;
 
 /**
  * System boundary: fetches aggregated health metrics from InfluxDB.
@@ -19,6 +20,16 @@ public interface HealthDataClient {
      * @throws ExternalServiceException if InfluxDB is unreachable or query fails
      */
     HealthData fetchCurrentHealthData();
+
+    /**
+     * Fetches today's nutrition data from InfluxDB.
+     * Aggregates nutrition_calories, nutrition_protein, nutrition_carbs, nutrition_fat
+     * from today (since 00:00).
+     *
+     * @return today's aggregated nutrition data
+     * @throws ExternalServiceException if InfluxDB query fails or data is incomplete
+     */
+    NutritionData fetchTodayNutrition();
 
     /**
      * Logs nutrition data to InfluxDB using Line Protocol.
