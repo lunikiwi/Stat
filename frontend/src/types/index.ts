@@ -29,6 +29,7 @@ export interface ErrorResponse {
 export interface HealthMetrics {
   sleepScore: number;
   bodyBattery: number;
+  trainingLoadMinutes48h?: number;
 }
 
 export interface NutritionMetrics {
@@ -36,9 +37,24 @@ export interface NutritionMetrics {
   carbs: number;
   fat: number;
   calories: number;
-  caloriesRemaining: number;
+  caloriesRemaining?: number;
 }
 
 export interface TrainingMetrics {
   nextWorkout: string;
+}
+
+// Metrics API Response (based on api_metrics.md)
+export interface MetricsResponse {
+  health: {
+    sleepScore: number;
+    bodyBattery: number;
+    trainingLoadMinutes48h: number;
+  };
+  nutrition: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
 }

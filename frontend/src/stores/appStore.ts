@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import type { ChatMessage, HealthMetrics, NutritionMetrics, TrainingMetrics, MetricsUsed } from '../types';
+import { fetchMetrics } from '../services/api';
 
 interface AppState {
   chatHistory: ChatMessage[];
@@ -53,6 +54,38 @@ export const useAppStore = defineStore('app', {
 
     clearError() {
       this.error = null;
+    },
+
+    async loadMetrics() {
+      this.setLoading(true);
+      this.clearError();
+
+      try {
+        const response = await fetchMetrics();
+
+        // Update health metrics
+        this.updateHealthMetrics({
+          sleepScore: response.health.sleepScore,
+          bodyBattery: response.health.bodyBattery,
+          trainingLoadMinutes48h: response.health.trainingLoadMinutes48h,
+        });
+
+        // Update nutrition metrics with calculated caloriesRemaining
+        const targetCalories = 2500; // Default target, could be made configurable
+        this.updateNutritionMetrics({
+          calories: response.nutrition.calories,
+          protein: response.nutrition.protein,
+          carbs: response.nutrition.carbs,
+          fat: response.nutrition.fat,
+          caloriesRemaining: targetCalories - response.nutrition.calories,
+        });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load metrics';
+        this.setError(errorMessage);
+        console.error('Error loading metrics:', error);
+      } finally {
+        this.setLoading(false);
+      }
     },
   },
 });

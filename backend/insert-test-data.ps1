@@ -16,39 +16,39 @@ $headers = @{
     "Content-Type" = "text/plain"
 }
 
-# Insert Body Battery data (scale 0-100)
+# Insert Body Battery data
 Write-Host "📊 Inserting Body Battery data..." -ForegroundColor Yellow
-$body = "health,metric=body_battery value=65 $TIMESTAMP"
+$body = "body_battery value=65 $TIMESTAMP"
 Invoke-RestMethod -Uri "$INFLUX_URL/api/v2/write?org=$INFLUX_ORG&bucket=$INFLUX_BUCKET&precision=ns" `
     -Method Post -Headers $headers -Body $body | Out-Null
 
-# Insert Sleep Score data (scale 0-100)
+# Insert Sleep Score data
 Write-Host "😴 Inserting Sleep Score data..." -ForegroundColor Yellow
-$body = "health,metric=sleep_score value=78 $TIMESTAMP"
+$body = "sleep_score value=78 $TIMESTAMP"
 Invoke-RestMethod -Uri "$INFLUX_URL/api/v2/write?org=$INFLUX_ORG&bucket=$INFLUX_BUCKET&precision=ns" `
     -Method Post -Headers $headers -Body $body | Out-Null
 
-# Insert Heart Rate data (bpm)
-Write-Host "❤️  Inserting Heart Rate data..." -ForegroundColor Yellow
-$body = "health,metric=heart_rate value=72 $TIMESTAMP"
+# Insert Training Minutes data
+Write-Host "🏋️  Inserting Training Minutes data..." -ForegroundColor Yellow
+$body = "training_minutes value=45 $TIMESTAMP"
 Invoke-RestMethod -Uri "$INFLUX_URL/api/v2/write?org=$INFLUX_ORG&bucket=$INFLUX_BUCKET&precision=ns" `
     -Method Post -Headers $headers -Body $body | Out-Null
 
-# Insert Stress Level data (scale 0-100)
-Write-Host "😰 Inserting Stress Level data..." -ForegroundColor Yellow
-$body = "health,metric=stress_level value=35 $TIMESTAMP"
+# Insert Nutrition data
+Write-Host "🍎 Inserting Nutrition data..." -ForegroundColor Yellow
+$body = "nutrition_calories value=1850 $TIMESTAMP"
 Invoke-RestMethod -Uri "$INFLUX_URL/api/v2/write?org=$INFLUX_ORG&bucket=$INFLUX_BUCKET&precision=ns" `
     -Method Post -Headers $headers -Body $body | Out-Null
 
-# Insert Steps data
-Write-Host "🚶 Inserting Steps data..." -ForegroundColor Yellow
-$body = "health,metric=steps value=8500 $TIMESTAMP"
+$body = "nutrition_protein value=140 $TIMESTAMP"
 Invoke-RestMethod -Uri "$INFLUX_URL/api/v2/write?org=$INFLUX_ORG&bucket=$INFLUX_BUCKET&precision=ns" `
     -Method Post -Headers $headers -Body $body | Out-Null
 
-# Insert Calories data
-Write-Host "🔥 Inserting Calories data..." -ForegroundColor Yellow
-$body = "health,metric=calories value=2100 $TIMESTAMP"
+$body = "nutrition_carbs value=180 $TIMESTAMP"
+Invoke-RestMethod -Uri "$INFLUX_URL/api/v2/write?org=$INFLUX_ORG&bucket=$INFLUX_BUCKET&precision=ns" `
+    -Method Post -Headers $headers -Body $body | Out-Null
+
+$body = "nutrition_fat value=60 $TIMESTAMP"
 Invoke-RestMethod -Uri "$INFLUX_URL/api/v2/write?org=$INFLUX_ORG&bucket=$INFLUX_BUCKET&precision=ns" `
     -Method Post -Headers $headers -Body $body | Out-Null
 
@@ -58,10 +58,11 @@ Write-Host ""
 Write-Host "📋 Summary of inserted data:" -ForegroundColor Cyan
 Write-Host "  - Body Battery: 65/100"
 Write-Host "  - Sleep Score: 78/100"
-Write-Host "  - Heart Rate: 72 bpm"
-Write-Host "  - Stress Level: 35/100"
-Write-Host "  - Steps: 8,500"
-Write-Host "  - Calories: 2,100"
+Write-Host "  - Training Minutes: 45 min"
+Write-Host "  - Calories: 1850 kcal"
+Write-Host "  - Protein: 140g"
+Write-Host "  - Carbs: 180g"
+Write-Host "  - Fat: 60g"
 Write-Host ""
 Write-Host "🧪 Now test the chat API:" -ForegroundColor Cyan
 Write-Host 'curl -X POST http://localhost:8081/api/chat -H "Content-Type: application/json" -d "{\"currentMessage\": \"What should I eat today?\"}"'

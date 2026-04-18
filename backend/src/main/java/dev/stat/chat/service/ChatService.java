@@ -2,6 +2,7 @@ package dev.stat.chat.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.stat.chat.config.UserProfileConfig;
 import dev.stat.chat.domain.HealthData;
 import dev.stat.chat.domain.NutritionData;
 import dev.stat.chat.dto.ChatRequest;
@@ -27,13 +28,16 @@ public class ChatService {
     private final HealthDataClient healthDataClient;
     private final NutritionApiClient nutritionApiClient;
     private final LlmClient llmClient;
+    private final UserProfileConfig userProfileConfig;
 
     ChatService(HealthDataClient healthDataClient,
                 NutritionApiClient nutritionApiClient,
-                LlmClient llmClient) {
+                LlmClient llmClient,
+                UserProfileConfig userProfileConfig) {
         this.healthDataClient = healthDataClient;
         this.nutritionApiClient = nutritionApiClient;
         this.llmClient = llmClient;
+        this.userProfileConfig = userProfileConfig;
     }
 
     /**
@@ -50,8 +54,9 @@ public class ChatService {
         HealthData health = healthDataClient.fetchCurrentHealthData();
         NutritionData nutrition = nutritionApiClient.fetchTodayNutrition();
 
+        String systemContext = buildSystemContext();
         String prompt = buildPrompt(request, health, nutrition);
-        String llmResponse = llmClient.chat(prompt);
+        String llmResponse = llmClient.chat(prompt, systemContext);
 
         // Check if response is a function call
         String reply = handleLlmResponse(llmResponse);
@@ -63,6 +68,32 @@ public class ChatService {
         );
 
         return new ChatResponse(reply, metrics);
+    }
+
+    /**
+     * Builds the system context instruction for the LLM.
+     * This defines the AI coach's persona and the user's profile.
+     */
+    private String buildSystemContext() {
+        var sb = new StringBuilder();
+        sb.append("# AI Coach System Context\n\n");
+
+        sb.append("## Your Role\n");
+        sb.append(userProfileConfig.persona()).append("\n\n");
+
+        sb.append("## User Profile\n");
+        sb.append("- Name: ").append(userProfileConfig.name()).append("\n");
+        sb.append("- Goal: ").append(userProfileConfig.goal()).append("\n");
+        sb.append("- Diet: ").append(userProfileConfig.diet()).append("\n");
+        sb.append("- Metrics: ").append(userProfileConfig.metrics()).append("\n\n");
+
+        sb.append("## Instructions\n");
+        sb.append("- Use the provided health and nutrition data to give personalized, actionable advice.\n");
+        sb.append("- Be direct and data-driven in your responses.\n");
+        sb.append("- Reference specific metrics when making recommendations.\n");
+        sb.append("- Keep responses concise and focused on the user's goal.\n");
+
+        return sb.toString();
     }
 
     private String buildPrompt(ChatRequest request, HealthData health, NutritionData nutrition) {

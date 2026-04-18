@@ -3,10 +3,12 @@ dev\stat\chat\client\LlmRestClient$Property.class
 dev\stat\chat\domain\HealthData.class
 dev\stat\chat\client\LlmRestClient$Content.class
 dev\stat\chat\service\LlmClient.class
+dev\stat\chat\dto\HealthMetrics.class
 dev\stat\chat\ExternalServiceExceptionMapper.class
 dev\stat\chat\client\LlmRestClient$FunctionDeclaration.class
 dev\stat\chat\ChatResource.class
 dev\stat\chat\service\DefaultHealthDataClient.class
+dev\stat\chat\dto\MetricsResponse.class
 dev\stat\chat\dto\ChatMessage.class
 dev\stat\chat\client\LlmRestClient.class
 dev\stat\chat\service\ExternalServiceException.class
@@ -22,9 +24,12 @@ dev\stat\chat\dto\ChatResponse.class
 dev\stat\chat\client\LlmRestClient$Candidate.class
 dev\stat\chat\config\InfluxDBConfig.class
 dev\stat\chat\client\LlmRestClient$Schema.class
+dev\stat\chat\MetricsResource.class
+dev\stat\chat\dto\NutritionMetrics.class
 dev\stat\chat\service\NutritionApiClient.class
 dev\stat\chat\client\LlmRestClient$Tool.class
 dev\stat\chat\client\LlmRestClient$ChatCompletionResponse.class
+dev\stat\chat\config\UserProfileConfig.class
 dev\stat\chat\service\DefaultNutritionApiClient.class
 dev\stat\chat\client\LlmRestClient$GenerationConfig.class
 dev\stat\chat\domain\NutritionData.class

@@ -35,13 +35,14 @@ public interface LlmRestClient {
     );
 
     /**
-     * Request to Gemini API with optional function declarations.
+     * Request to Gemini API with optional function declarations and system instruction.
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record ChatCompletionRequest(
             List<Content> contents,
             GenerationConfig generationConfig,
-            List<Tool> tools
+            List<Tool> tools,
+            Content systemInstruction
     ) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

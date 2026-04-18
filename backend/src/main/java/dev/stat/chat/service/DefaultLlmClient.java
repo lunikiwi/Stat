@@ -37,16 +37,30 @@ public class DefaultLlmClient implements LlmClient {
 
     @Override
     public String chat(String prompt) {
+        return chat(prompt, null);
+    }
+
+    @Override
+    public String chat(String prompt, String systemContext) {
         try {
             LOG.debugf("Sending prompt to Gemini (model: %s)", model);
 
-            // Build Gemini API request with function declarations
+            // Build system instruction if provided
+            LlmRestClient.Content systemInstruction = null;
+            if (systemContext != null && !systemContext.isBlank()) {
+                systemInstruction = new LlmRestClient.Content(
+                        List.of(new LlmRestClient.Part(systemContext, null))
+                );
+            }
+
+            // Build Gemini API request with function declarations and optional system instruction
             LlmRestClient.ChatCompletionRequest request = new LlmRestClient.ChatCompletionRequest(
                     List.of(new LlmRestClient.Content(
                             List.of(new LlmRestClient.Part(prompt, null))
                     )),
                     new LlmRestClient.GenerationConfig(temperature, maxTokens),
-                    buildFunctionDeclarations()
+                    buildFunctionDeclarations(),
+                    systemInstruction
             );
 
             // Call Gemini API (API key is passed as query parameter)
@@ -120,6 +134,7 @@ public class DefaultLlmClient implements LlmClient {
     /**
      * Extracts the assistant's message content from the Gemini response.
      * Returns the text content or a JSON representation of function calls.
+     * Logs a warning if the response was truncated due to max tokens.
      */
     private String extractResponseContent(LlmRestClient.ChatCompletionResponse response) {
         if (response == null || response.candidates() == null || response.candidates().isEmpty()) {
@@ -131,6 +146,12 @@ public class DefaultLlmClient implements LlmClient {
             firstCandidate.content().parts() == null ||
             firstCandidate.content().parts().isEmpty()) {
             throw new ExternalServiceException("LLM", "Gemini API response missing content");
+        }
+
+        // Check if response was truncated due to max tokens
+        if ("MAX_TOKENS".equals(firstCandidate.finishReason())) {
+            LOG.warnf("Gemini response was truncated due to max_tokens limit (%d). " +
+                    "Consider increasing stat.llm.max-tokens in application.properties.", maxTokens);
         }
 
         LlmRestClient.Part firstPart = firstCandidate.content().parts().get(0);

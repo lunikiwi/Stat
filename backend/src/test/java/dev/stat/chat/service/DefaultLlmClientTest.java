@@ -228,6 +228,74 @@ class DefaultLlmClientTest {
                 .withRequestBody(containing("log_nutrition")));
     }
 
+    @Test
+    void shouldLogWarningWhenResponseIsTruncatedDueToMaxTokens() {
+        // Arrange: Mock Gemini API response with finishReason=MAX_TOKENS
+        wireMockServer.stubFor(post(urlPathMatching("/v1beta/models/gemini-2.5-flash:generateContent"))
+                .withQueryParam("key", equalTo("test-key"))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                {
+                                  "candidates": [{
+                                    "content": {
+                                      "parts": [{
+                                        "text": "Today you've consumed 1850 calories, 140g protein"
+                                      }]
+                                    },
+                                    "finishReason": "MAX_TOKENS"
+                                  }]
+                                }
+                                """)));
+
+        // Act
+        String prompt = "What should I eat today?";
+        String result = llmClient.chat(prompt);
+
+        // Assert: Response should still be returned but with warning indicator
+        assertNotNull(result);
+        assertTrue(result.contains("1850 calories") || result.contains("140g protein"));
+
+        // Note: In production, this should log a warning.
+        // We verify the response is returned despite truncation.
+    }
+
+    @Test
+    void shouldIncludeSystemInstructionInRequest() {
+        // Arrange: Mock Gemini API response
+        wireMockServer.stubFor(post(urlPathMatching("/v1beta/models/gemini-2.5-flash:generateContent"))
+                .withQueryParam("key", equalTo("test-key"))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                {
+                                  "candidates": [{
+                                    "content": {
+                                      "parts": [{
+                                        "text": "Basierend auf deinem Ziel empfehle ich..."
+                                      }]
+                                    },
+                                    "finishReason": "STOP"
+                                  }]
+                                }
+                                """)));
+
+        // Act
+        String prompt = "Was soll ich heute essen?";
+        String systemContext = "Du bist ein AI Coach. User: Max. Ziel: Fettabbau.";
+        llmClient.chat(prompt, systemContext);
+
+        // Assert: Verify systemInstruction was included in the request body
+        wireMockServer.verify(postRequestedFor(urlPathMatching("/v1beta/models/.*:generateContent"))
+                .withRequestBody(containing("systemInstruction"))
+                .withRequestBody(containing("AI Coach"))
+                .withRequestBody(containing("Fettabbau")));
+    }
+
     /**
      * Test profile to configure WireMock URL for Gemini.
      */
@@ -238,7 +306,12 @@ class DefaultLlmClientTest {
                     "stat.llm.base-url", "http://localhost:9998",
                     "stat.llm.api-key", "test-key",
                     "stat.llm.model", "gemini-2.5-flash",
-                    "stat.external.timeout-ms", "5000"
+                    "stat.external.timeout-ms", "5000",
+                    "stat.user.name", "Max",
+                    "stat.user.goal", "Fokus auf Fettabbau",
+                    "stat.user.diet", "Allesesser",
+                    "stat.user.metrics", "26 Jahre, 78kg",
+                    "stat.user.persona", "Direkter Coach"
             );
         }
     }

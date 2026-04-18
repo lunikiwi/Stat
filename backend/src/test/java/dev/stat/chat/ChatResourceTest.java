@@ -42,7 +42,7 @@ class ChatResourceTest {
         Mockito.when(nutritionApiClient.fetchTodayNutrition())
                 .thenReturn(new NutritionData(1800, 120, 200, 60));
 
-        Mockito.when(llmClient.chat(Mockito.anyString()))
+        Mockito.when(llmClient.chat(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn("Iss jetzt 2 Bananen für schnelle Energie.");
 
         // Act & Assert
@@ -124,7 +124,7 @@ class ChatResourceTest {
         Mockito.when(nutritionApiClient.fetchTodayNutrition())
                 .thenReturn(new NutritionData(2200, 150, 250, 70));
 
-        Mockito.when(llmClient.chat(Mockito.anyString()))
+        Mockito.when(llmClient.chat(Mockito.anyString(), Mockito.anyString()))
                 .thenThrow(new ExternalServiceException("LLM", "OpenAI API rate limit exceeded"));
 
         // Act & Assert
@@ -169,7 +169,7 @@ class ChatResourceTest {
                 .thenReturn(new NutritionData(1800, 120, 200, 60));
 
         // LLM returns a function call instead of text
-        Mockito.when(llmClient.chat(Mockito.anyString()))
+        Mockito.when(llmClient.chat(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn("{\"functionCall\":{\"name\":\"log_nutrition\",\"args\":{\"calories\":500,\"protein\":30,\"carbs\":60,\"fat\":20}}}");
 
         // Act & Assert
