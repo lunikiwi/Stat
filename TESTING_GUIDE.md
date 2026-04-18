@@ -11,7 +11,7 @@ First, verify your API key works:
 **Windows PowerShell:**
 ```powershell
 cd backend
-.\test-gemini-api.ps1 AIzaSyDGbUi2D1ZYlFGKWKueuYstLmeIZHH6w9w
+.\test-gemini-api.ps1 REDACTED_KEY (rotated already)
 ```
 
 **Expected Output:**
