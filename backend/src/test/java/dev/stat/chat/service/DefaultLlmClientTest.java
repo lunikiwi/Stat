@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for DefaultLlmClient using WireMock.
- * Tests the OpenAI/Gemini API integration with timeout and error handling.
+ * Tests the Gemini API integration with timeout and error handling.
  */
 @QuarkusTest
 @TestProfile(DefaultLlmClientTest.LlmTestProfile.class)
@@ -49,26 +49,22 @@ class DefaultLlmClientTest {
 
     @Test
     void shouldSendPromptToLlmAndReceiveResponse() {
-        // Arrange: Mock LLM API response (OpenAI format)
-        wireMockServer.stubFor(post(urlPathEqualTo("/v1/chat/completions"))
-                .withHeader("Authorization", equalTo("Bearer test-key"))
+        // Arrange: Mock Gemini API response
+        wireMockServer.stubFor(post(urlPathMatching("/v1beta/models/gemini-2.5-flash:generateContent"))
+                .withQueryParam("key", equalTo("test-key"))
                 .withHeader("Content-Type", equalTo("application/json"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
                         .withBody("""
                                 {
-                                  "id": "chatcmpl-123",
-                                  "object": "chat.completion",
-                                  "created": 1677652288,
-                                  "model": "gpt-4",
-                                  "choices": [{
-                                    "index": 0,
-                                    "message": {
-                                      "role": "assistant",
-                                      "content": "Da du in 2 Stunden Intervalle fährst und heute erst 120g Carbs hattest, empfehle ich dir jetzt sofort 2 Bananen."
+                                  "candidates": [{
+                                    "content": {
+                                      "parts": [{
+                                        "text": "Da du in 2 Stunden Intervalle fährst und heute erst 120g Carbs hattest, empfehle ich dir jetzt sofort 2 Bananen."
+                                      }]
                                     },
-                                    "finish_reason": "stop"
+                                    "finishReason": "STOP"
                                   }]
                                 }
                                 """)));
@@ -81,15 +77,15 @@ class DefaultLlmClientTest {
         assertNotNull(result);
         assertTrue(result.contains("Bananen") || result.contains("Carbs"));
 
-        // Verify the request was made with correct headers
-        wireMockServer.verify(postRequestedFor(urlPathEqualTo("/v1/chat/completions"))
-                .withHeader("Authorization", equalTo("Bearer test-key")));
+        // Verify the request was made with correct query parameter
+        wireMockServer.verify(postRequestedFor(urlPathMatching("/v1beta/models/gemini-2.5-flash:generateContent"))
+                .withQueryParam("key", equalTo("test-key")));
     }
 
     @Test
     void shouldThrowExceptionWhenLlmTimesOut() {
         // Arrange: Simulate timeout (delay > 5000ms)
-        wireMockServer.stubFor(post(urlPathEqualTo("/v1/chat/completions"))
+        wireMockServer.stubFor(post(urlPathMatching("/v1beta/models/.*:generateContent"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withFixedDelay(6000))); // 6 seconds > 5 second timeout
@@ -101,13 +97,14 @@ class DefaultLlmClientTest {
         );
 
         assertTrue(exception.getMessage().contains("LLM") ||
-                   exception.getMessage().contains("timeout"));
+                   exception.getMessage().contains("timeout") ||
+                   exception.getMessage().contains("Gemini"));
     }
 
     @Test
     void shouldThrowExceptionWhenLlmReturns429RateLimit() {
         // Arrange: Simulate rate limiting
-        wireMockServer.stubFor(post(urlPathEqualTo("/v1/chat/completions"))
+        wireMockServer.stubFor(post(urlPathMatching("/v1beta/models/.*:generateContent"))
                 .willReturn(aResponse()
                         .withStatus(429)
                         .withHeader("Content-Type", "application/json")
@@ -121,13 +118,14 @@ class DefaultLlmClientTest {
 
         assertTrue(exception.getMessage().contains("LLM") ||
                    exception.getMessage().contains("429") ||
-                   exception.getMessage().contains("rate limit"));
+                   exception.getMessage().contains("rate limit") ||
+                   exception.getMessage().contains("Gemini"));
     }
 
     @Test
     void shouldThrowExceptionWhenLlmReturns500() {
         // Arrange: Simulate server error
-        wireMockServer.stubFor(post(urlPathEqualTo("/v1/chat/completions"))
+        wireMockServer.stubFor(post(urlPathMatching("/v1beta/models/.*:generateContent"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
@@ -138,13 +136,14 @@ class DefaultLlmClientTest {
                 () -> llmClient.chat("test prompt")
         );
 
-        assertTrue(exception.getMessage().contains("LLM"));
+        assertTrue(exception.getMessage().contains("LLM") ||
+                   exception.getMessage().contains("Gemini"));
     }
 
     @Test
     void shouldThrowExceptionWhenLlmReturnsInvalidJson() {
         // Arrange: Return invalid JSON
-        wireMockServer.stubFor(post(urlPathEqualTo("/v1/chat/completions"))
+        wireMockServer.stubFor(post(urlPathMatching("/v1beta/models/.*:generateContent"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -156,21 +155,24 @@ class DefaultLlmClientTest {
                 () -> llmClient.chat("test prompt")
         );
 
-        assertTrue(exception.getMessage().contains("LLM"));
+        assertTrue(exception.getMessage().contains("LLM") ||
+                   exception.getMessage().contains("Gemini"));
     }
 
     @Test
     void shouldIncludePromptInRequest() {
         // Arrange
-        wireMockServer.stubFor(post(urlPathEqualTo("/v1/chat/completions"))
+        wireMockServer.stubFor(post(urlPathMatching("/v1beta/models/.*:generateContent"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
                         .withBody("""
                                 {
-                                  "choices": [{
-                                    "message": {
-                                      "content": "Response"
+                                  "candidates": [{
+                                    "content": {
+                                      "parts": [{
+                                        "text": "Response"
+                                      }]
                                     }
                                   }]
                                 }
@@ -181,12 +183,12 @@ class DefaultLlmClientTest {
         llmClient.chat(prompt);
 
         // Assert: Verify the prompt was included in the request body
-        wireMockServer.verify(postRequestedFor(urlPathEqualTo("/v1/chat/completions"))
+        wireMockServer.verify(postRequestedFor(urlPathMatching("/v1beta/models/.*:generateContent"))
                 .withRequestBody(containing("Custom test prompt")));
     }
 
     /**
-     * Test profile to configure WireMock URL for LLM.
+     * Test profile to configure WireMock URL for Gemini.
      */
     public static class LlmTestProfile implements QuarkusTestProfile {
         @Override
@@ -194,7 +196,7 @@ class DefaultLlmClientTest {
             return Map.of(
                     "stat.llm.base-url", "http://localhost:9998",
                     "stat.llm.api-key", "test-key",
-                    "stat.llm.model", "gpt-4",
+                    "stat.llm.model", "gemini-2.5-flash",
                     "stat.external.timeout-ms", "5000"
             );
         }

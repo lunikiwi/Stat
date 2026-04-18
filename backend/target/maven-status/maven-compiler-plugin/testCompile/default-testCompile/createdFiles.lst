@@ -1,1 +1,5 @@
+dev\stat\chat\service\DefaultLlmClientTest.class
+dev\stat\chat\service\DefaultNutritionApiClientTest.class
 dev\stat\chat\ChatResourceTest.class
+dev\stat\chat\service\DefaultHealthDataClientTest.class
+dev\stat\chat\service\DefaultLlmClientTest$LlmTestProfile.class

@@ -5,6 +5,7 @@ import com.influxdb.client.QueryApi;
 import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
 import dev.stat.chat.domain.HealthData;
+import dev.stat.chat.domain.NutritionData;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.InjectMock;
 import jakarta.inject.Inject;
@@ -13,7 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -104,14 +107,85 @@ class DefaultHealthDataClientTest {
                    exception.getMessage().contains("missing"));
     }
 
+    @Test
+    void shouldFetchNutritionDataFromInfluxDB() {
+        // Arrange: Mock InfluxDB response with nutrition metrics from today (since 00:00)
+        FluxTable caloriesTable = createMockFluxTable("nutrition_calories", 2100.0);
+        FluxTable proteinTable = createMockFluxTable("nutrition_protein", 150.0);
+        FluxTable carbsTable = createMockFluxTable("nutrition_carbs", 220.0);
+        FluxTable fatTable = createMockFluxTable("nutrition_fat", 70.0);
+
+        when(queryApi.query(anyString(), anyString()))
+                .thenReturn(List.of(caloriesTable, proteinTable, carbsTable, fatTable));
+
+        // Act
+        NutritionData result = healthDataClient.fetchTodayNutrition();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2100, result.calories());
+        assertEquals(150, result.proteinGrams());
+        assertEquals(220, result.carbsGrams());
+        assertEquals(70, result.fatGrams());
+
+        // Verify that a Flux query was executed
+        ArgumentCaptor<String> queryCaptor = ArgumentCaptor.forClass(String.class);
+        verify(queryApi).query(queryCaptor.capture(), anyString());
+
+        String executedQuery = queryCaptor.getValue();
+        assertNotNull(executedQuery);
+        assertTrue(executedQuery.contains("nutrition_calories"), "Query should fetch calories");
+        assertTrue(executedQuery.contains("nutrition_protein"), "Query should fetch protein");
+        assertTrue(executedQuery.contains("nutrition_carbs"), "Query should fetch carbs");
+        assertTrue(executedQuery.contains("nutrition_fat"), "Query should fetch fat");
+        assertTrue(executedQuery.contains("sum()"), "Query should aggregate with sum()");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenNutritionDataIsMissing() {
+        // Arrange: Return incomplete nutrition data (missing fat)
+        FluxTable caloriesTable = createMockFluxTable("nutrition_calories", 2100.0);
+        FluxTable proteinTable = createMockFluxTable("nutrition_protein", 150.0);
+        FluxTable carbsTable = createMockFluxTable("nutrition_carbs", 220.0);
+
+        when(queryApi.query(anyString(), anyString()))
+                .thenReturn(List.of(caloriesTable, proteinTable, carbsTable));
+
+        // Act & Assert
+        ExternalServiceException exception = assertThrows(
+                ExternalServiceException.class,
+                () -> healthDataClient.fetchTodayNutrition()
+        );
+
+        assertTrue(exception.getMessage().contains("incomplete") ||
+                   exception.getMessage().contains("missing"));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenNutritionQueryFails() {
+        // Arrange: Simulate InfluxDB failure
+        when(queryApi.query(anyString(), anyString()))
+                .thenThrow(new RuntimeException("InfluxDB connection failed"));
+
+        // Act & Assert
+        ExternalServiceException exception = assertThrows(
+                ExternalServiceException.class,
+                () -> healthDataClient.fetchTodayNutrition()
+        );
+
+        assertTrue(exception.getMessage().contains("InfluxDB"));
+    }
+
     /**
      * Helper method to create a mock FluxTable with a single record.
+     * Uses Mockito's lenient mode to handle final classes.
      */
-    private FluxTable createMockFluxTable(String measurement, Double value) {
-        FluxTable table = mock(FluxTable.class);
-        FluxRecord record = mock(FluxRecord.class);
+    private FluxTable createMockFluxTable(String metricName, Double value) {
+        FluxTable table = mock(FluxTable.class, withSettings().lenient());
+        FluxRecord record = mock(FluxRecord.class, withSettings().lenient());
 
-        when(record.getMeasurement()).thenReturn(measurement);
+        // Mock the getValueByKey method to return the metric name
+        when(record.getValueByKey("metric")).thenReturn(metricName);
         when(record.getValue()).thenReturn(value);
         when(record.getTime()).thenReturn(Instant.now());
 

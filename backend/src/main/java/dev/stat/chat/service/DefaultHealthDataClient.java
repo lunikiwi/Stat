@@ -6,11 +6,15 @@ import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
 import dev.stat.chat.config.InfluxDBConfig;
 import dev.stat.chat.domain.HealthData;
+import dev.stat.chat.domain.NutritionData;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +26,7 @@ import java.util.stream.Collectors;
  * - Sleep Score: previous night (last 24h)
  * - Training Load: sum of last 48h
  * - Body Battery: most recent value
+ * - Nutrition Data: sum of today's nutrition values (since 00:00)
  */
 @ApplicationScoped
 public class DefaultHealthDataClient implements HealthDataClient {
@@ -56,7 +61,7 @@ public class DefaultHealthDataClient implements HealthDataClient {
 
         } catch (Exception e) {
             LOG.errorf(e, "Failed to fetch health data from InfluxDB");
-            throw new ExternalServiceException("InfluxDB query failed: " + e.getMessage(), e);
+            throw new ExternalServiceException("InfluxDB", "InfluxDB query failed: " + e.getMessage(), e);
         }
     }
 
@@ -138,7 +143,121 @@ public class DefaultHealthDataClient implements HealthDataClient {
 
         if (!missingMetrics.isEmpty()) {
             throw new ExternalServiceException(
+                    "InfluxDB",
                     "InfluxDB returned incomplete data. Missing metrics: " + String.join(", ", missingMetrics)
+            );
+        }
+    }
+
+    /**
+     * Fetches today's nutrition data from InfluxDB.
+     * Aggregates nutrition_calories, nutrition_protein, nutrition_carbs, nutrition_fat
+     * from today (since 00:00).
+     *
+     * @return today's aggregated nutrition data
+     * @throws ExternalServiceException if InfluxDB query fails or data is incomplete
+     */
+    public NutritionData fetchTodayNutrition() {
+        try {
+            QueryApi queryApi = influxDBClient.getQueryApi();
+            String fluxQuery = buildNutritionFluxQuery();
+
+            LOG.debugf("Executing nutrition Flux query: %s", fluxQuery);
+
+            List<FluxTable> tables = queryApi.query(fluxQuery, influxDBConfig.getOrg());
+
+            Map<String, Double> metrics = extractMetrics(tables);
+
+            validateNutritionMetrics(metrics);
+
+            return new NutritionData(
+                    metrics.get("nutrition_calories").intValue(),
+                    metrics.get("nutrition_protein").intValue(),
+                    metrics.get("nutrition_carbs").intValue(),
+                    metrics.get("nutrition_fat").intValue()
+            );
+
+        } catch (Exception e) {
+            LOG.errorf(e, "Failed to fetch nutrition data from InfluxDB");
+            throw new ExternalServiceException("InfluxDB", "InfluxDB nutrition query failed: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Builds the Flux query to aggregate today's nutrition metrics.
+     * Sums all nutrition values from today (since 00:00 local time).
+     */
+    private String buildNutritionFluxQuery() {
+        String bucket = influxDBConfig.getBucket();
+
+        // Calculate start of today in UTC
+        ZonedDateTime startOfToday = LocalDate.now()
+                .atStartOfDay(ZoneId.systemDefault())
+                .withZoneSameInstant(ZoneId.of("UTC"));
+
+        String startTime = startOfToday.toInstant().toString();
+
+        // Calories
+        String caloriesQuery = String.format("""
+            calories = from(bucket: "%s")
+              |> range(start: %s)
+              |> filter(fn: (r) => r["_measurement"] == "nutrition_calories")
+              |> filter(fn: (r) => r["_field"] == "value")
+              |> sum()
+              |> set(key: "metric", value: "nutrition_calories")
+            """, bucket, startTime);
+
+        // Protein
+        String proteinQuery = String.format("""
+            protein = from(bucket: "%s")
+              |> range(start: %s)
+              |> filter(fn: (r) => r["_measurement"] == "nutrition_protein")
+              |> filter(fn: (r) => r["_field"] == "value")
+              |> sum()
+              |> set(key: "metric", value: "nutrition_protein")
+            """, bucket, startTime);
+
+        // Carbs
+        String carbsQuery = String.format("""
+            carbs = from(bucket: "%s")
+              |> range(start: %s)
+              |> filter(fn: (r) => r["_measurement"] == "nutrition_carbs")
+              |> filter(fn: (r) => r["_field"] == "value")
+              |> sum()
+              |> set(key: "metric", value: "nutrition_carbs")
+            """, bucket, startTime);
+
+        // Fat
+        String fatQuery = String.format("""
+            fat = from(bucket: "%s")
+              |> range(start: %s)
+              |> filter(fn: (r) => r["_measurement"] == "nutrition_fat")
+              |> filter(fn: (r) => r["_field"] == "value")
+              |> sum()
+              |> set(key: "metric", value: "nutrition_fat")
+            """, bucket, startTime);
+
+        // Union all queries
+        return caloriesQuery + "\n" +
+               proteinQuery + "\n" +
+               carbsQuery + "\n" +
+               fatQuery + "\n" +
+               "union(tables: [calories, protein, carbs, fat])";
+    }
+
+    /**
+     * Validates that all required nutrition metrics are present.
+     */
+    private void validateNutritionMetrics(Map<String, Double> metrics) {
+        List<String> requiredMetrics = List.of("nutrition_calories", "nutrition_protein", "nutrition_carbs", "nutrition_fat");
+        List<String> missingMetrics = requiredMetrics.stream()
+                .filter(metric -> !metrics.containsKey(metric))
+                .toList();
+
+        if (!missingMetrics.isEmpty()) {
+            throw new ExternalServiceException(
+                    "InfluxDB",
+                    "InfluxDB returned incomplete nutrition data. Missing metrics: " + String.join(", ", missingMetrics)
             );
         }
     }

@@ -1,0 +1,18 @@
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: stat-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUX_USER:-stat_admin}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUX_PASSWORD:-securepassword123}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUX_ORG:-stat_home}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUX_BUCKET:-garmin_data}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUX_TOKEN:-super_secret_dev_token}
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+
+volumes:
+  influxdb-data:

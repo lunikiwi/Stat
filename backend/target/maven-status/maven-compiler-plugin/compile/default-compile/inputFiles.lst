@@ -1,4 +1,6 @@
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\ChatResource.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\client\LlmRestClient.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\config\InfluxDBConfig.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\domain\HealthData.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\domain\NutritionData.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\ChatMessage.java

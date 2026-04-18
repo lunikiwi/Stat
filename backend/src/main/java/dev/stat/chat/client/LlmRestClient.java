@@ -2,62 +2,65 @@ package dev.stat.chat.client;
 
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.QueryParam;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import java.util.List;
 
 /**
- * Quarkus REST Client for LLM API (OpenAI/Gemini compatible).
+ * Quarkus REST Client for Google AI Studio (Gemini) API.
  * Sends chat prompts and receives AI-generated responses.
  */
 @RegisterRestClient(configKey = "llm")
-@Path("/v1/chat")
+@Path("/v1beta/models")
 public interface LlmRestClient {
 
     /**
-     * Send a chat completion request to the LLM.
+     * Send a chat completion request to Gemini.
      *
-     * @param authorization Bearer token for authentication
+     * @param model The model name (e.g., "gemini-1.5-flash")
+     * @param apiKey API key for authentication (passed as query parameter)
      * @param request Chat completion request
      * @return Chat completion response
      */
     @POST
-    @Path("/completions")
-    ChatCompletionResponse createChatCompletion(
-            @HeaderParam("Authorization") String authorization,
+    @Path("/{model}:generateContent")
+    ChatCompletionResponse generateContent(
+            @jakarta.ws.rs.PathParam("model") String model,
+            @QueryParam("key") String apiKey,
             ChatCompletionRequest request
     );
 
     /**
-     * Request to LLM API.
+     * Request to Gemini API.
      */
     record ChatCompletionRequest(
-            String model,
-            List<Message> messages,
-            double temperature,
-            int maxTokens
+            List<Content> contents,
+            GenerationConfig generationConfig
     ) {}
 
-    record Message(
-            String role,
-            String content
+    record Content(
+            List<Part> parts
+    ) {}
+
+    record Part(
+            String text
+    ) {}
+
+    record GenerationConfig(
+            double temperature,
+            int maxOutputTokens
     ) {}
 
     /**
-     * Response from LLM API.
+     * Response from Gemini API.
      */
     record ChatCompletionResponse(
-            String id,
-            String object,
-            long created,
-            String model,
-            List<Choice> choices
+            List<Candidate> candidates
     ) {}
 
-    record Choice(
-            int index,
-            Message message,
+    record Candidate(
+            Content content,
             String finishReason
     ) {}
 }

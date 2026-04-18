@@ -8,7 +8,7 @@
 
 ### 1. Strict Dependency (All-or-Nothing)
 
-- The endpoint MUST successfully retrieve data from InfluxDB (Garmin data) AND the Nutrition API (Spoonacular).
+- The endpoint MUST successfully retrieve data from InfluxDB (Garmin data)
 - If ANY external service fails or times out, the endpoint MUST abort and return an HTTP 503 Service Unavailable with a clear error message (e.g., "Nutrition API currently unavailable").
 - No partial prompts are allowed.
 
@@ -16,7 +16,7 @@
 
 - **Sleep:** Extract the single Sleep Score from the *previous* night.
 - **Training Load:** Sum up the training duration/intensity from the *last 48 hours*.
-- **Nutrition:** Total macros (Protein, Carbs, Fats) and Calories consumed *today*.
+- **Nutrition:** Total macros (Protein, Carbs, Fats) and Calories consumed *today*. These are now queried directly from InfluxDB (measurements: `nutrition_calories`, `nutrition_protein`, `nutrition_carbs`, `nutrition_fat`), summing up all values since midnight (00:00).
 - **Live Metric:** Most recent 'Body Battery' value.
 
 ### 3. State Management (Client-Side State)
