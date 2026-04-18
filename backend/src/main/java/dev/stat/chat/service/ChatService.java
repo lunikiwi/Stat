@@ -1,21 +1,28 @@
 package dev.stat.chat.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.stat.chat.domain.HealthData;
 import dev.stat.chat.domain.NutritionData;
 import dev.stat.chat.dto.ChatRequest;
 import dev.stat.chat.dto.ChatResponse;
 import dev.stat.chat.dto.MetricsUsed;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.jboss.logging.Logger;
 
 /**
  * Orchestrates the chat flow: fetches health data, nutrition data,
  * builds a super-prompt, and sends it to the LLM.
+ * Handles Gemini Function Calling for structured actions like logging nutrition.
  *
  * This is a deep module: simple interface (one public method),
- * complex implementation (data aggregation, prompt building, LLM call).
+ * complex implementation (data aggregation, prompt building, LLM call, function execution).
  */
 @ApplicationScoped
 public class ChatService {
+
+    private static final Logger LOG = Logger.getLogger(ChatService.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final HealthDataClient healthDataClient;
     private final NutritionApiClient nutritionApiClient;
@@ -35,6 +42,7 @@ public class ChatService {
      * 2. Fetching nutrition data from Spoonacular
      * 3. Building a super-prompt with all context
      * 4. Sending to LLM and returning the reply
+     * 5. If LLM returns a function call, execute it and return confirmation
      *
      * @throws ExternalServiceException if any external service fails (all-or-nothing)
      */
@@ -43,7 +51,10 @@ public class ChatService {
         NutritionData nutrition = nutritionApiClient.fetchTodayNutrition();
 
         String prompt = buildPrompt(request, health, nutrition);
-        String reply = llmClient.chat(prompt);
+        String llmResponse = llmClient.chat(prompt);
+
+        // Check if response is a function call
+        String reply = handleLlmResponse(llmResponse);
 
         var metrics = new MetricsUsed(
                 health.bodyBattery(),
@@ -81,5 +92,60 @@ public class ChatService {
         sb.append("user: ").append(request.currentMessage()).append("\n");
 
         return sb.toString();
+    }
+
+    /**
+     * Handles LLM response: either returns text directly or executes function calls.
+     */
+    private String handleLlmResponse(String llmResponse) {
+        // Check if response contains a function call
+        if (llmResponse.startsWith("{") && llmResponse.contains("functionCall")) {
+            try {
+                JsonNode root = OBJECT_MAPPER.readTree(llmResponse);
+                JsonNode functionCall = root.get("functionCall");
+
+                if (functionCall != null) {
+                    String functionName = functionCall.get("name").asText();
+                    JsonNode args = functionCall.get("args");
+
+                    if ("log_nutrition".equals(functionName)) {
+                        return executeLogNutrition(args);
+                    } else {
+                        LOG.warnf("Unknown function call: %s", functionName);
+                        return "Funktion nicht unterstützt: " + functionName;
+                    }
+                }
+            } catch (Exception e) {
+                LOG.errorf(e, "Failed to parse function call from LLM response");
+                return "Fehler beim Verarbeiten der Antwort.";
+            }
+        }
+
+        // Regular text response
+        return llmResponse;
+    }
+
+    /**
+     * Executes the log_nutrition function call.
+     */
+    private String executeLogNutrition(JsonNode args) {
+        try {
+            int calories = args.get("calories").asInt();
+            int protein = args.get("protein").asInt();
+            int carbs = args.get("carbs").asInt();
+            int fat = args.get("fat").asInt();
+
+            healthDataClient.logNutrition(calories, protein, carbs, fat);
+
+            LOG.infof("Function call executed: log_nutrition(%d, %d, %d, %d)",
+                    calories, protein, carbs, fat);
+
+            return String.format("Mahlzeit erfasst! %d kcal (%dg Protein, %dg Carbs, %dg Fett)",
+                    calories, protein, carbs, fat);
+        } catch (Exception e) {
+            LOG.errorf(e, "Failed to execute log_nutrition function");
+            throw new ExternalServiceException("InfluxDB",
+                    "Failed to log nutrition data: " + e.getMessage(), e);
+        }
     }
 }

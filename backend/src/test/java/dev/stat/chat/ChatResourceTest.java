@@ -158,4 +158,35 @@ class ChatResourceTest {
         .then()
                 .statusCode(400);
     }
+
+    @Test
+    void functionCall_logsNutritionAndReturnsConfirmation() {
+        // Arrange: stub all external boundaries
+        Mockito.when(healthDataClient.fetchCurrentHealthData())
+                .thenReturn(new HealthData(45, 85, 120));
+
+        Mockito.when(nutritionApiClient.fetchTodayNutrition())
+                .thenReturn(new NutritionData(1800, 120, 200, 60));
+
+        // LLM returns a function call instead of text
+        Mockito.when(llmClient.chat(Mockito.anyString()))
+                .thenReturn("{\"functionCall\":{\"name\":\"log_nutrition\",\"args\":{\"calories\":500,\"protein\":30,\"carbs\":60,\"fat\":20}}}");
+
+        // Act & Assert
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "currentMessage": "Ich habe gerade 2 Bananen gegessen"
+                        }
+                        """)
+        .when()
+                .post("/api/chat")
+        .then()
+                .statusCode(200)
+                .body("reply", is("Mahlzeit erfasst! 500 kcal (30g Protein, 60g Carbs, 20g Fett)"));
+
+        // Verify that logNutrition was called
+        Mockito.verify(healthDataClient).logNutrition(500, 30, 60, 20);
+    }
 }

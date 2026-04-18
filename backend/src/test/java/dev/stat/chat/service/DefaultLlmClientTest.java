@@ -187,6 +187,47 @@ class DefaultLlmClientTest {
                 .withRequestBody(containing("Custom test prompt")));
     }
 
+    @Test
+    void shouldSendFunctionDeclarationsInRequest() {
+        // Arrange: Mock Gemini API response with function call
+        wireMockServer.stubFor(post(urlPathMatching("/v1beta/models/gemini-2.5-flash:generateContent"))
+                .withQueryParam("key", equalTo("test-key"))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                {
+                                  "candidates": [{
+                                    "content": {
+                                      "parts": [{
+                                        "functionCall": {
+                                          "name": "log_nutrition",
+                                          "args": {
+                                            "calories": 500,
+                                            "protein": 30,
+                                            "carbs": 60,
+                                            "fat": 20
+                                          }
+                                        }
+                                      }]
+                                    },
+                                    "finishReason": "STOP"
+                                  }]
+                                }
+                                """)));
+
+        // Act
+        String prompt = "Ich habe gerade 2 Bananen gegessen";
+        String result = llmClient.chat(prompt);
+
+        // Assert: Verify function declarations were sent
+        wireMockServer.verify(postRequestedFor(urlPathMatching("/v1beta/models/gemini-2.5-flash:generateContent"))
+                .withRequestBody(containing("tools"))
+                .withRequestBody(containing("functionDeclarations"))
+                .withRequestBody(containing("log_nutrition")));
+    }
+
     /**
      * Test profile to configure WireMock URL for Gemini.
      */

@@ -19,4 +19,17 @@ public interface HealthDataClient {
      * @throws ExternalServiceException if InfluxDB is unreachable or query fails
      */
     HealthData fetchCurrentHealthData();
+
+    /**
+     * Logs nutrition data to InfluxDB using Line Protocol.
+     * Writes four measurements: nutrition_calories, nutrition_protein,
+     * nutrition_carbs, and nutrition_fat with the current timestamp.
+     *
+     * @param calories total calories consumed
+     * @param protein protein in grams
+     * @param carbs carbohydrates in grams
+     * @param fat fat in grams
+     * @throws ExternalServiceException if InfluxDB write fails
+     */
+    void logNutrition(int calories, int protein, int carbs, int fat);
 }

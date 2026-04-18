@@ -9,6 +9,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Default Google Gemini-backed implementation of LlmClient.
@@ -39,12 +40,13 @@ public class DefaultLlmClient implements LlmClient {
         try {
             LOG.debugf("Sending prompt to Gemini (model: %s)", model);
 
-            // Build Gemini API request
+            // Build Gemini API request with function declarations
             LlmRestClient.ChatCompletionRequest request = new LlmRestClient.ChatCompletionRequest(
                     List.of(new LlmRestClient.Content(
-                            List.of(new LlmRestClient.Part(prompt))
+                            List.of(new LlmRestClient.Part(prompt, null))
                     )),
-                    new LlmRestClient.GenerationConfig(temperature, maxTokens)
+                    new LlmRestClient.GenerationConfig(temperature, maxTokens),
+                    buildFunctionDeclarations()
             );
 
             // Call Gemini API (API key is passed as query parameter)
@@ -93,7 +95,31 @@ public class DefaultLlmClient implements LlmClient {
     }
 
     /**
+     * Builds function declarations for Gemini Function Calling.
+     * Defines the log_nutrition tool for logging nutrition data.
+     */
+    private List<LlmRestClient.Tool> buildFunctionDeclarations() {
+        LlmRestClient.FunctionDeclaration logNutrition = new LlmRestClient.FunctionDeclaration(
+                "log_nutrition",
+                "Logs nutrition data (calories, protein, carbs, fat) to the database. Use this when the user mentions eating food.",
+                new LlmRestClient.Schema(
+                        "object",
+                        Map.of(
+                                "calories", new LlmRestClient.Property("integer", "Total calories consumed"),
+                                "protein", new LlmRestClient.Property("integer", "Protein in grams"),
+                                "carbs", new LlmRestClient.Property("integer", "Carbohydrates in grams"),
+                                "fat", new LlmRestClient.Property("integer", "Fat in grams")
+                        ),
+                        List.of("calories", "protein", "carbs", "fat")
+                )
+        );
+
+        return List.of(new LlmRestClient.Tool(List.of(logNutrition)));
+    }
+
+    /**
      * Extracts the assistant's message content from the Gemini response.
+     * Returns the text content or a JSON representation of function calls.
      */
     private String extractResponseContent(LlmRestClient.ChatCompletionResponse response) {
         if (response == null || response.candidates() == null || response.candidates().isEmpty()) {
@@ -108,10 +134,40 @@ public class DefaultLlmClient implements LlmClient {
         }
 
         LlmRestClient.Part firstPart = firstCandidate.content().parts().get(0);
+
+        // Check if response contains a function call
+        if (firstPart.functionCall() != null) {
+            // Return function call as JSON string for ChatService to parse
+            return String.format("{\"functionCall\":{\"name\":\"%s\",\"args\":%s}}",
+                    firstPart.functionCall().name(),
+                    toJsonString(firstPart.functionCall().args()));
+        }
+
         if (firstPart.text() == null) {
             throw new ExternalServiceException("LLM", "Gemini API response missing text");
         }
 
         return firstPart.text();
+    }
+
+    /**
+     * Simple JSON serialization for function call arguments.
+     */
+    private String toJsonString(Map<String, Object> args) {
+        StringBuilder json = new StringBuilder("{");
+        boolean first = true;
+        for (Map.Entry<String, Object> entry : args.entrySet()) {
+            if (!first) json.append(",");
+            json.append("\"").append(entry.getKey()).append("\":");
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                json.append("\"").append(value).append("\"");
+            } else {
+                json.append(value);
+            }
+            first = false;
+        }
+        json.append("}");
+        return json.toString();
     }
 }

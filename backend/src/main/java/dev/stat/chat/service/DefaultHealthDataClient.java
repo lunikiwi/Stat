@@ -2,6 +2,8 @@ package dev.stat.chat.service;
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.QueryApi;
+import com.influxdb.client.WriteApiBlocking;
+import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
 import dev.stat.chat.config.InfluxDBConfig;
@@ -259,6 +261,45 @@ public class DefaultHealthDataClient implements HealthDataClient {
                     "InfluxDB",
                     "InfluxDB returned incomplete nutrition data. Missing metrics: " + String.join(", ", missingMetrics)
             );
-        }
-    }
+       }
+   }
+
+   /**
+    * Logs nutrition data to InfluxDB using Line Protocol.
+    * Writes four measurements with the current timestamp:
+    * - nutrition_calories
+    * - nutrition_protein
+    * - nutrition_carbs
+    * - nutrition_fat
+    *
+    * @param calories total calories consumed
+    * @param protein protein in grams
+    * @param carbs carbohydrates in grams
+    * @param fat fat in grams
+    * @throws ExternalServiceException if InfluxDB write fails
+    */
+   @Override
+   public void logNutrition(int calories, int protein, int carbs, int fat) {
+       try {
+           WriteApiBlocking writeApi = influxDBClient.getWriteApiBlocking();
+           long timestamp = Instant.now().toEpochMilli();
+
+           // Write each nutrition metric as a separate measurement
+           String caloriesRecord = String.format("nutrition_calories value=%d %d", calories, timestamp);
+           String proteinRecord = String.format("nutrition_protein value=%d %d", protein, timestamp);
+           String carbsRecord = String.format("nutrition_carbs value=%d %d", carbs, timestamp);
+           String fatRecord = String.format("nutrition_fat value=%d %d", fat, timestamp);
+
+           writeApi.writeRecord(WritePrecision.MS, caloriesRecord);
+           writeApi.writeRecord(WritePrecision.MS, proteinRecord);
+           writeApi.writeRecord(WritePrecision.MS, carbsRecord);
+           writeApi.writeRecord(WritePrecision.MS, fatRecord);
+
+           LOG.infof("Logged nutrition: %d cal, %dg protein, %dg carbs, %dg fat", calories, protein, carbs, fat);
+
+       } catch (Exception e) {
+           LOG.errorf(e, "Failed to write nutrition data to InfluxDB");
+           throw new ExternalServiceException("InfluxDB", "InfluxDB write failed: " + e.getMessage(), e);
+       }
+   }
 }
