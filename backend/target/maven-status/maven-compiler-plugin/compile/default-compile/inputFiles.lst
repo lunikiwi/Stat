@@ -11,9 +11,12 @@ c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\ErrorRe
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\HealthMetrics.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\MetricsResponse.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\MetricsUsed.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\NutritionLogRequest.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\NutritionLogResponse.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\dto\NutritionMetrics.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\ExternalServiceExceptionMapper.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\MetricsResource.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\NutritionLogResource.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\service\ChatService.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\service\DefaultHealthDataClient.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\main\java\dev\stat\chat\service\DefaultLlmClient.java

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-import type { ChatMessage, HealthMetrics, NutritionMetrics, TrainingMetrics, MetricsUsed } from '../types';
-import { fetchMetrics } from '../services/api';
+import type { ChatMessage, HealthMetrics, NutritionMetrics, TrainingMetrics, MetricsUsed, NutritionLogRequest } from '../types';
+import { fetchMetrics, logNutrition } from '../services/api';
 
 interface AppState {
   chatHistory: ChatMessage[];
@@ -10,6 +10,7 @@ interface AppState {
   latestMetricsUsed: MetricsUsed | null;
   isLoading: boolean;
   error: string | null;
+  successMessage: string | null;
 }
 
 export const useAppStore = defineStore('app', {
@@ -21,6 +22,7 @@ export const useAppStore = defineStore('app', {
     latestMetricsUsed: null,
     isLoading: false,
     error: null,
+    successMessage: null,
   }),
 
   actions: {
@@ -56,6 +58,14 @@ export const useAppStore = defineStore('app', {
       this.error = null;
     },
 
+    setSuccessMessage(message: string | null) {
+      this.successMessage = message;
+    },
+
+    clearSuccessMessage() {
+      this.successMessage = null;
+    },
+
     async loadMetrics() {
       this.setLoading(true);
       this.clearError();
@@ -85,6 +95,23 @@ export const useAppStore = defineStore('app', {
         console.error('Error loading metrics:', error);
       } finally {
         this.setLoading(false);
+      }
+    },
+
+    async addNutritionLog(request: NutritionLogRequest) {
+      this.clearError();
+      this.clearSuccessMessage();
+
+      try {
+        await logNutrition(request);
+        this.setSuccessMessage('Mahlzeit erfolgreich gespeichert!');
+
+        // Reload metrics to reflect the new nutrition data
+        await this.loadMetrics();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to log nutrition';
+        this.setError(errorMessage);
+        throw error;
       }
     },
   },

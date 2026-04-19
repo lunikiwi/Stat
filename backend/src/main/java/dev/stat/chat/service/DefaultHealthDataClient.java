@@ -17,7 +17,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,11 +28,15 @@ import java.util.stream.Collectors;
  * - Training Load: sum of last 48h
  * - Body Battery: most recent value
  * - Nutrition Data: sum of today's nutrition values (since 00:00)
+ *
+ * Implements retry logic for transient connection failures.
  */
 @ApplicationScoped
 public class DefaultHealthDataClient implements HealthDataClient {
 
     private static final Logger LOG = Logger.getLogger(DefaultHealthDataClient.class);
+    private static final int MAX_RETRIES = 2;
+    private static final long RETRY_DELAY_MS = 500;
 
     @Inject
     InfluxDBClient influxDBClient;
@@ -43,7 +46,7 @@ public class DefaultHealthDataClient implements HealthDataClient {
 
     @Override
     public HealthData fetchCurrentHealthData() {
-        try {
+        return executeWithRetry(() -> {
             QueryApi queryApi = influxDBClient.getQueryApi();
             String fluxQuery = buildFluxQuery();
 
@@ -60,11 +63,64 @@ public class DefaultHealthDataClient implements HealthDataClient {
                     metrics.get("sleep_score").intValue(),
                     metrics.get("training_minutes").intValue()
             );
+        }, "fetch health data");
+    }
 
-        } catch (Exception e) {
-            LOG.errorf(e, "Failed to fetch health data from InfluxDB");
-            throw new ExternalServiceException("InfluxDB", "InfluxDB query failed: " + e.getMessage(), e);
+    /**
+     * Executes an operation with retry logic for transient failures.
+     * Retries up to MAX_RETRIES times with exponential backoff.
+     */
+    private <T> T executeWithRetry(InfluxOperation<T> operation, String operationName) {
+        Exception lastException = null;
+
+        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                return operation.execute();
+            } catch (Exception e) {
+                lastException = e;
+
+                if (attempt < MAX_RETRIES && isRetryableException(e)) {
+                    long delay = RETRY_DELAY_MS * attempt;
+                    LOG.warnf("InfluxDB %s failed (attempt %d/%d): %s. Retrying in %dms...",
+                            operationName, attempt, MAX_RETRIES, e.getMessage(), delay);
+
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
         }
+
+        LOG.errorf(lastException, "Failed to %s from InfluxDB after %d attempts", operationName, MAX_RETRIES);
+        throw new ExternalServiceException("InfluxDB",
+                "InfluxDB query failed: " + lastException.getMessage(), lastException);
+    }
+
+    /**
+     * Determines if an exception is retryable (transient network/connection issues).
+     */
+    private boolean isRetryableException(Exception e) {
+        String message = e.getMessage();
+        if (message == null) {
+            return false;
+        }
+
+        // Retry on connection-related errors
+        return message.contains("Connection reset") ||
+               message.contains("Connection refused") ||
+               message.contains("timeout") ||
+               message.contains("Broken pipe") ||
+               message.contains("Socket closed");
+    }
+
+    @FunctionalInterface
+    private interface InfluxOperation<T> {
+        T execute() throws Exception;
     }
 
     /**
@@ -280,7 +336,7 @@ public class DefaultHealthDataClient implements HealthDataClient {
     */
    @Override
    public void logNutrition(int calories, int protein, int carbs, int fat) {
-       try {
+       executeWithRetry(() -> {
            WriteApiBlocking writeApi = influxDBClient.getWriteApiBlocking();
            long timestamp = Instant.now().toEpochMilli();
 
@@ -297,9 +353,7 @@ public class DefaultHealthDataClient implements HealthDataClient {
 
            LOG.infof("Logged nutrition: %d cal, %dg protein, %dg carbs, %dg fat", calories, protein, carbs, fat);
 
-       } catch (Exception e) {
-           LOG.errorf(e, "Failed to write nutrition data to InfluxDB");
-           throw new ExternalServiceException("InfluxDB", "InfluxDB write failed: " + e.getMessage(), e);
-       }
+           return null; // Void operation
+       }, "log nutrition data");
    }
 }

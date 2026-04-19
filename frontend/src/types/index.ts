@@ -58,3 +58,8 @@ export interface MetricsResponse {
     fat: number;
   };
 }
+
+// Nutrition Log Request
+export interface NutritionLogRequest {
+  description: string;
+}

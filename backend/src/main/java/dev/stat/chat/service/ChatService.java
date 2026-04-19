@@ -8,6 +8,7 @@ import dev.stat.chat.domain.NutritionData;
 import dev.stat.chat.dto.ChatRequest;
 import dev.stat.chat.dto.ChatResponse;
 import dev.stat.chat.dto.MetricsUsed;
+import dev.stat.chat.dto.NutritionLogRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
@@ -71,6 +72,69 @@ public class ChatService {
     }
 
     /**
+     * Processes a silent nutrition log request by:
+     * 1. Building a special "silent prompt" that instructs the LLM to extract macros
+     * 2. Sending to LLM with function calling enabled
+     * 3. Executing the log_nutrition function call
+     * 4. Returning a confirmation message
+     *
+     * This is a "silent" operation - no chat history, minimal response.
+     *
+     * @param request The nutrition log request with meal description
+     * @return Confirmation message from the LLM
+     * @throws ExternalServiceException if LLM or InfluxDB fails
+     */
+    public String processSilentNutritionLog(NutritionLogRequest request) {
+        String systemContext = buildSilentSystemContext();
+        String prompt = buildSilentPrompt(request.description());
+
+        LOG.infof("Processing silent nutrition log for: %s", request.description());
+
+        String llmResponse = llmClient.chat(prompt, systemContext);
+
+        // Handle the LLM response (should be a function call)
+        String reply = handleLlmResponse(llmResponse);
+
+        LOG.infof("Silent nutrition log completed: %s", reply);
+
+        return reply;
+    }
+
+    /**
+     * Builds a minimal system context for silent nutrition logging.
+     */
+    private String buildSilentSystemContext() {
+        return """
+                # Nutrition Extraction System
+
+                ## Your Role
+                You are a nutrition data extraction assistant. Your job is to:
+                1. Parse the meal description
+                2. Estimate the macronutrients (calories, protein, carbs, fat)
+                3. Call the log_nutrition function with the extracted values
+                4. Respond with a brief confirmation of the logged values
+
+                ## Instructions
+                - Be accurate in your estimations
+                - Use the log_nutrition function to record the data
+                - Keep your confirmation message concise (one sentence)
+                - Format: "Mahlzeit erfasst! X kcal (Xg Protein, Xg Carbs, Xg Fett)"
+                """;
+    }
+
+    /**
+     * Builds the silent prompt for nutrition extraction.
+     */
+    private String buildSilentPrompt(String mealDescription) {
+        return String.format("""
+                Extrahiere die Makros aus folgendem Text und logge sie mit dem log_nutrition Tool.
+                Antworte nur mit einer kurzen Bestätigung der Werte.
+
+                Mahlzeit: %s
+                """, mealDescription);
+    }
+
+    /**
      * Builds the system context instruction for the LLM.
      * This defines the AI coach's persona and the user's profile.
      */
@@ -127,6 +191,8 @@ public class ChatService {
 
     /**
      * Handles LLM response: either returns text directly or executes function calls.
+     *
+     * @throws ExternalServiceException if function execution fails (e.g., InfluxDB write error)
      */
     private String handleLlmResponse(String llmResponse) {
         // Check if response contains a function call
@@ -146,6 +212,9 @@ public class ChatService {
                         return "Funktion nicht unterstützt: " + functionName;
                     }
                 }
+            } catch (ExternalServiceException e) {
+                // Re-throw ExternalServiceException to propagate InfluxDB errors
+                throw e;
             } catch (Exception e) {
                 LOG.errorf(e, "Failed to parse function call from LLM response");
                 return "Fehler beim Verarbeiten der Antwort.";
