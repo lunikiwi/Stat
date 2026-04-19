@@ -7,6 +7,7 @@ export interface ChatMessage {
 export interface ChatRequest {
   currentMessage: string;
   chatHistory: ChatMessage[];
+  imageBase64?: string | null;
 }
 
 export interface MetricsUsed {
@@ -62,4 +63,13 @@ export interface MetricsResponse {
 // Nutrition Log Request
 export interface NutritionLogRequest {
   description: string;
+}
+
+// Nutrition Journal Entry
+export interface NutritionEntry {
+  timestamp: string; // ISO-8601 timestamp
+  calories: number;
+  proteinGrams: number;
+  carbsGrams: number;
+  fatGrams: number;
 }

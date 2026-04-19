@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-import type { ChatMessage, HealthMetrics, NutritionMetrics, TrainingMetrics, MetricsUsed, NutritionLogRequest } from '../types';
-import { fetchMetrics, logNutrition } from '../services/api';
+import type { ChatMessage, HealthMetrics, NutritionMetrics, TrainingMetrics, MetricsUsed, NutritionLogRequest, NutritionEntry } from '../types';
+import { fetchMetrics, logNutrition, fetchNutritionEntries, deleteNutritionEntry } from '../services/api';
 
 interface AppState {
   chatHistory: ChatMessage[];
@@ -8,6 +8,7 @@ interface AppState {
   nutritionMetrics: NutritionMetrics | null;
   trainingMetrics: TrainingMetrics | null;
   latestMetricsUsed: MetricsUsed | null;
+  nutritionEntries: NutritionEntry[];
   isLoading: boolean;
   error: string | null;
   successMessage: string | null;
@@ -20,6 +21,7 @@ export const useAppStore = defineStore('app', {
     nutritionMetrics: null,
     trainingMetrics: null,
     latestMetricsUsed: null,
+    nutritionEntries: [],
     isLoading: false,
     error: null,
     successMessage: null,
@@ -110,6 +112,44 @@ export const useAppStore = defineStore('app', {
         await this.loadMetrics();
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to log nutrition';
+        this.setError(errorMessage);
+        throw error;
+      }
+    },
+
+    async loadNutritionEntries() {
+      this.setLoading(true);
+      this.clearError();
+
+      try {
+        this.nutritionEntries = await fetchNutritionEntries();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load nutrition entries';
+        this.setError(errorMessage);
+        console.error('Error loading nutrition entries:', error);
+      } finally {
+        this.setLoading(false);
+      }
+    },
+
+    async removeNutritionEntry(timestamp: string) {
+      this.clearError();
+      this.clearSuccessMessage();
+
+      try {
+        await deleteNutritionEntry(timestamp);
+
+        // Remove from local state
+        this.nutritionEntries = this.nutritionEntries.filter(
+          entry => entry.timestamp !== timestamp
+        );
+
+        this.setSuccessMessage('Eintrag erfolgreich gelöscht!');
+
+        // Reload metrics to update dashboard totals
+        await this.loadMetrics();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to delete nutrition entry';
         this.setError(errorMessage);
         throw error;
       }

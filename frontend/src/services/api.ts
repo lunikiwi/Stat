@@ -1,4 +1,4 @@
-import type { ChatRequest, ChatResponse, ErrorResponse, MetricsResponse, NutritionLogRequest } from '../types';
+import type { ChatRequest, ChatResponse, ErrorResponse, MetricsResponse, NutritionLogRequest, NutritionEntry } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -91,6 +91,58 @@ export async function fetchMetrics(): Promise<MetricsResponse> {
     }
 
     return await response.json();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Network error: Could not reach the server', 0);
+  }
+}
+
+export async function fetchNutritionEntries(): Promise<NutritionEntry[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/nutrition/entries`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData: ErrorResponse = await response.json();
+      throw new ApiError(
+        errorData.message || 'Failed to fetch nutrition entries',
+        response.status,
+        errorData
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Network error: Could not reach the server', 0);
+  }
+}
+
+export async function deleteNutritionEntry(timestamp: string): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/nutrition/entries/${encodeURIComponent(timestamp)}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData: ErrorResponse = await response.json();
+      throw new ApiError(
+        errorData.message || 'Failed to delete nutrition entry',
+        response.status,
+        errorData
+      );
+    }
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;

@@ -1,17 +1,31 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
 import type { NutritionMetrics } from '../types';
 
 defineProps<{
   metrics: NutritionMetrics | null;
 }>();
 
+const router = useRouter();
+
 const getProgressPercentage = (current: number, total: number) => {
   return Math.min((current / total) * 100, 100);
+};
+
+const openJournal = () => {
+  router.push('/nutrition');
 };
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
+  <div
+    class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+    @click="openJournal"
+    role="button"
+    tabindex="0"
+    @keydown.enter="openJournal"
+    @keydown.space.prevent="openJournal"
+  >
     <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Nutrition</h2>
 
     <div v-if="metrics" class="space-y-4">
@@ -20,11 +34,11 @@ const getProgressPercentage = (current: number, total: number) => {
         <div class="flex justify-between text-sm mb-1">
           <span class="text-gray-600 dark:text-gray-400">Kalorien</span>
           <span class="font-semibold text-gray-800 dark:text-gray-100">
-            {{ metrics.calories }} / {{ metrics.calories + metrics.caloriesRemaining }}
+            {{ metrics.calories }} / {{ metrics.calories + (metrics.caloriesRemaining || 0) }}
           </span>
         </div>
         <div class="text-xs text-gray-500 dark:text-gray-500 mb-2">
-          {{ metrics.caloriesRemaining }} verbleibend
+          {{ metrics.caloriesRemaining || 0 }} verbleibend
         </div>
       </div>
 
