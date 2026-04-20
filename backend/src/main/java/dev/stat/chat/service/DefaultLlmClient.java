@@ -42,22 +42,39 @@ public class DefaultLlmClient implements LlmClient {
 
     @Override
     public String chat(String prompt, String systemContext) {
+        return chat(prompt, systemContext, null);
+    }
+
+    @Override
+    public String chat(String prompt, String systemContext, String imageBase64) {
         try {
-            LOG.debugf("Sending prompt to Gemini (model: %s)", model);
+            LOG.debugf("Sending prompt to Gemini (model: %s, with image: %s)",
+                    model, imageBase64 != null ? "yes" : "no");
 
             // Build system instruction if provided
             LlmRestClient.Content systemInstruction = null;
             if (systemContext != null && !systemContext.isBlank()) {
                 systemInstruction = new LlmRestClient.Content(
-                        List.of(new LlmRestClient.Part(systemContext, null))
+                        List.of(new LlmRestClient.Part(systemContext, null, null))
                 );
+            }
+
+            // Build content parts: text prompt and optional image
+            List<LlmRestClient.Part> parts = new java.util.ArrayList<>();
+            parts.add(new LlmRestClient.Part(prompt, null, null));
+
+            if (imageBase64 != null && !imageBase64.isBlank()) {
+                // Add image as inline_data with JPEG mime type
+                parts.add(new LlmRestClient.Part(
+                        null,
+                        null,
+                        new LlmRestClient.InlineData("image/jpeg", imageBase64)
+                ));
             }
 
             // Build Gemini API request with function declarations and optional system instruction
             LlmRestClient.ChatCompletionRequest request = new LlmRestClient.ChatCompletionRequest(
-                    List.of(new LlmRestClient.Content(
-                            List.of(new LlmRestClient.Part(prompt, null))
-                    )),
+                    List.of(new LlmRestClient.Content(parts)),
                     new LlmRestClient.GenerationConfig(temperature, maxTokens),
                     buildFunctionDeclarations(),
                     systemInstruction
@@ -110,7 +127,7 @@ public class DefaultLlmClient implements LlmClient {
 
     /**
      * Builds function declarations for Gemini Function Calling.
-     * Defines the log_nutrition tool for logging nutrition data.
+     * Defines tools for logging nutrition data, body weight, water intake, and retrieving nutrition details.
      */
     private List<LlmRestClient.Tool> buildFunctionDeclarations() {
         LlmRestClient.FunctionDeclaration logNutrition = new LlmRestClient.FunctionDeclaration(
@@ -128,7 +145,41 @@ public class DefaultLlmClient implements LlmClient {
                 )
         );
 
-        return List.of(new LlmRestClient.Tool(List.of(logNutrition)));
+        LlmRestClient.FunctionDeclaration logWeight = new LlmRestClient.FunctionDeclaration(
+                "log_weight",
+                "Logs body weight to the database. Use this when the user mentions their current weight.",
+                new LlmRestClient.Schema(
+                        "object",
+                        Map.of(
+                                "weight_kg", new LlmRestClient.Property("number", "Body weight in kilograms")
+                        ),
+                        List.of("weight_kg")
+                )
+        );
+
+        LlmRestClient.FunctionDeclaration logWater = new LlmRestClient.FunctionDeclaration(
+                "log_water",
+                "Logs water intake to the database. Use this when the user mentions drinking water.",
+                new LlmRestClient.Schema(
+                        "object",
+                        Map.of(
+                                "amount_ml", new LlmRestClient.Property("integer", "Water amount in milliliters")
+                        ),
+                        List.of("amount_ml")
+                )
+        );
+
+        LlmRestClient.FunctionDeclaration getNutritionDetails = new LlmRestClient.FunctionDeclaration(
+                "get_nutrition_details",
+                "Retrieves today's individual nutrition entries from the database. Use this when the user asks about already logged meals or wants a summary of individual meal entries.",
+                new LlmRestClient.Schema(
+                        "object",
+                        Map.of(),
+                        List.of()
+                )
+        );
+
+        return List.of(new LlmRestClient.Tool(List.of(logNutrition, logWeight, logWater, getNutritionDetails)));
     }
 
     /**

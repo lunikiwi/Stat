@@ -1,5 +1,6 @@
 package dev.stat.chat;
 
+import dev.stat.chat.domain.BodyMetrics;
 import dev.stat.chat.domain.HealthData;
 import dev.stat.chat.domain.NutritionData;
 import dev.stat.chat.dto.HealthMetrics;
@@ -41,11 +42,16 @@ public class MetricsResource {
         // Fetch nutrition data from InfluxDB
         NutritionData nutritionData = healthDataClient.fetchTodayNutrition();
 
+        // Fetch body metrics (weight and water) from InfluxDB
+        BodyMetrics bodyMetrics = healthDataClient.fetchBodyMetrics();
+
         // Map domain objects to DTOs
         HealthMetrics health = new HealthMetrics(
                 healthData.sleepScore(),
                 healthData.bodyBattery(),
-                healthData.trainingLoadMinutes48h()
+                healthData.trainingLoadMinutes48h(),
+                bodyMetrics.currentWeightKg(),
+                bodyMetrics.todayWaterMl()
         );
 
         NutritionMetrics nutrition = new NutritionMetrics(

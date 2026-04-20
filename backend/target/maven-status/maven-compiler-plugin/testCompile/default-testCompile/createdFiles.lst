@@ -1,9 +1,13 @@
-dev\stat\chat\NutritionLogResourceTest.class
 dev\stat\chat\service\DefaultHealthDataClientTest.class
-dev\stat\chat\service\DefaultLlmClientTest$LlmTestProfile.class
+dev\stat\chat\service\ChatServiceWeightWaterTest.class
 dev\stat\chat\MetricsResourceTest.class
-dev\stat\chat\service\DefaultLlmClientTest.class
-dev\stat\chat\service\ChatServiceSilentNutritionTest.class
 dev\stat\chat\service\DefaultNutritionApiClientTest.class
 dev\stat\chat\ChatResourceTest.class
+dev\stat\chat\NutritionLogResourceTest.class
+dev\stat\chat\service\DefaultLlmClientTest$LlmTestProfile.class
+dev\stat\chat\service\DefaultLlmClientTest.class
+dev\stat\chat\NutritionJournalResourceTest.class
+dev\stat\chat\service\ChatServiceSilentNutritionTest.class
 dev\stat\chat\config\UserProfileConfigTest.class
+dev\stat\chat\service\ChatServiceTrendTest.class
+dev\stat\chat\service\ChatServiceNutritionDetailsTest.class

@@ -8,16 +8,16 @@ This document describes the Flux query used in [`DefaultHealthDataClient`](../sr
 
 The query aggregates three metrics according to the specification in [`specs/api_chat.md`](../../specs/api_chat.md):
 
-1. **Body Battery**: Most recent value (last 1 hour)
+1. **Body Battery**: Most recent value (last 24 hours - wider window to handle infrequent updates)
 2. **Sleep Score**: Previous night's score (last 24 hours)
 3. **Training Load**: Sum of training minutes (last 48 hours)
 
 ### Full Flux Query
 
 ```flux
-// 1. Body Battery - Most recent value
+// 1. Body Battery - Most recent value (24h window for reliability)
 bodyBattery = from(bucket: "garmin")
-  |> range(start: -1h)
+  |> range(start: -24h)
   |> filter(fn: (r) => r["_measurement"] == "body_battery")
   |> filter(fn: (r) => r["_field"] == "value")
   |> last()

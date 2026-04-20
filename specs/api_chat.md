@@ -40,7 +40,22 @@
       "role": "assistant",
       "content": "Deine Body Battery ist auf 45, aber dein Schlaf war mit 85 Punkten exzellent."
     }
-  ]
+  ],
+  "imageBase64": null
+}
+```
+
+**Optional Image Support:**
+- The `imageBase64` field is optional and can contain a Base64-encoded image (JPEG/PNG).
+- When an image is provided, it will be sent to Gemini as `inline_data` with `mimeType: 'image/jpeg'`.
+- The system context instructs Gemini: "If an image is provided, analyze the meal in the photo, estimate portions, and log the nutrition values using the log_nutrition tool."
+
+**Example with Image:**
+```json
+{
+  "currentMessage": "Was ist das für eine Mahlzeit?",
+  "chatHistory": [],
+  "imageBase64": "/9j/4AAQSkZJRgABAQEAYABgAAD..."
 }
 ```
 

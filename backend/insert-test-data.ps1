@@ -34,6 +34,18 @@ $body = "training_minutes value=45 $TIMESTAMP"
 Invoke-RestMethod -Uri "$INFLUX_URL/api/v2/write?org=$INFLUX_ORG&bucket=$INFLUX_BUCKET&precision=ns" `
     -Method Post -Headers $headers -Body $body | Out-Null
 
+# Insert Body Weight data
+Write-Host "⚖️  Inserting Body Weight data..." -ForegroundColor Yellow
+$body = "body_weight value=75.5 $TIMESTAMP"
+Invoke-RestMethod -Uri "$INFLUX_URL/api/v2/write?org=$INFLUX_ORG&bucket=$INFLUX_BUCKET&precision=ns" `
+    -Method Post -Headers $headers -Body $body | Out-Null
+
+# Insert Water Intake data
+Write-Host "💧 Inserting Water Intake data..." -ForegroundColor Yellow
+$body = "water_intake value=1500 $TIMESTAMP"
+Invoke-RestMethod -Uri "$INFLUX_URL/api/v2/write?org=$INFLUX_ORG&bucket=$INFLUX_BUCKET&precision=ns" `
+    -Method Post -Headers $headers -Body $body | Out-Null
+
 # Insert Nutrition data
 Write-Host "🍎 Inserting Nutrition data..." -ForegroundColor Yellow
 $body = "nutrition_calories value=1850 $TIMESTAMP"
@@ -59,6 +71,8 @@ Write-Host "📋 Summary of inserted data:" -ForegroundColor Cyan
 Write-Host "  - Body Battery: 65/100"
 Write-Host "  - Sleep Score: 78/100"
 Write-Host "  - Training Minutes: 45 min"
+Write-Host "  - Body Weight: 75.5 kg"
+Write-Host "  - Water Intake: 1500 ml"
 Write-Host "  - Calories: 1850 kcal"
 Write-Host "  - Protein: 140g"
 Write-Host "  - Carbs: 180g"

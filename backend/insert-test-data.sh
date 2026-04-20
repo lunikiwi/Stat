@@ -33,6 +33,20 @@ curl -s -X POST "${INFLUX_URL}/api/v2/write?org=${INFLUX_ORG}&bucket=${INFLUX_BU
   -H "Content-Type: text/plain" \
   --data-binary "training_minutes value=45 ${TIMESTAMP}"
 
+# Insert Body Weight data (measurement name must match query)
+echo "⚖️  Inserting Body Weight data..."
+curl -s -X POST "${INFLUX_URL}/api/v2/write?org=${INFLUX_ORG}&bucket=${INFLUX_BUCKET}&precision=ns" \
+  -H "Authorization: Token ${INFLUX_TOKEN}" \
+  -H "Content-Type: text/plain" \
+  --data-binary "body_weight value=75.5 ${TIMESTAMP}"
+
+# Insert Water Intake data (measurement name must match query)
+echo "💧 Inserting Water Intake data..."
+curl -s -X POST "${INFLUX_URL}/api/v2/write?org=${INFLUX_ORG}&bucket=${INFLUX_BUCKET}&precision=ns" \
+  -H "Authorization: Token ${INFLUX_TOKEN}" \
+  -H "Content-Type: text/plain" \
+  --data-binary "water_intake value=1500 ${TIMESTAMP}"
+
 # Insert Nutrition data (measurement names must match query)
 echo "🍎 Inserting Nutrition data..."
 curl -s -X POST "${INFLUX_URL}/api/v2/write?org=${INFLUX_ORG}&bucket=${INFLUX_BUCKET}&precision=ns" \
@@ -62,6 +76,8 @@ echo "📋 Summary of inserted data:"
 echo "  - Body Battery: 65/100"
 echo "  - Sleep Score: 78/100"
 echo "  - Training Minutes: 45 min"
+echo "  - Body Weight: 75.5 kg"
+echo "  - Water Intake: 1500 ml"
 echo "  - Calories: 1850 kcal"
 echo "  - Protein: 140g"
 echo "  - Carbs: 180g"

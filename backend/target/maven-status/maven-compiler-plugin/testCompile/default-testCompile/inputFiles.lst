@@ -1,8 +1,12 @@
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\ChatResourceTest.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\config\UserProfileConfigTest.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\MetricsResourceTest.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\NutritionJournalResourceTest.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\NutritionLogResourceTest.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\service\ChatServiceNutritionDetailsTest.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\service\ChatServiceSilentNutritionTest.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\service\ChatServiceTrendTest.java
+c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\service\ChatServiceWeightWaterTest.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\service\DefaultHealthDataClientTest.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\service\DefaultLlmClientTest.java
 c:\Users\lehmt\IdeaProjects\Stat\backend\src\test\java\dev\stat\chat\service\DefaultNutritionApiClientTest.java

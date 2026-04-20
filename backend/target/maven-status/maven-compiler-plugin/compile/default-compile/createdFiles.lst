@@ -1,5 +1,6 @@
 dev\stat\chat\client\LlmRestClient$Part.class
 dev\stat\chat\client\LlmRestClient$Property.class
+dev\stat\chat\NutritionJournalResource.class
 dev\stat\chat\domain\HealthData.class
 dev\stat\chat\client\LlmRestClient$Content.class
 dev\stat\chat\service\LlmClient.class
@@ -11,17 +12,21 @@ dev\stat\chat\ChatResource.class
 dev\stat\chat\service\DefaultHealthDataClient.class
 dev\stat\chat\dto\NutritionLogResponse.class
 dev\stat\chat\dto\MetricsResponse.class
+dev\stat\chat\client\LlmRestClient$InlineData.class
 dev\stat\chat\dto\ChatMessage.class
 dev\stat\chat\client\LlmRestClient.class
 dev\stat\chat\service\DefaultHealthDataClient$InfluxOperation.class
 dev\stat\chat\service\ExternalServiceException.class
+dev\stat\chat\domain\NutritionEntry.class
 dev\stat\chat\service\HealthDataClient.class
 dev\stat\chat\dto\ChatRequest.class
+dev\stat\chat\domain\TrendData.class
 dev\stat\chat\client\LlmRestClient$FunctionCall.class
 dev\stat\chat\client\LlmRestClient$ChatCompletionRequest.class
 dev\stat\chat\dto\MetricsUsed.class
 dev\stat\chat\NutritionLogResource.class
 dev\stat\chat\service\DefaultLlmClient.class
+dev\stat\chat\domain\BodyMetrics.class
 dev\stat\chat\dto\ErrorResponse.class
 dev\stat\chat\service\ChatService.class
 dev\stat\chat\dto\ChatResponse.class
@@ -37,3 +42,4 @@ dev\stat\chat\config\UserProfileConfig.class
 dev\stat\chat\service\DefaultNutritionApiClient.class
 dev\stat\chat\client\LlmRestClient$GenerationConfig.class
 dev\stat\chat\domain\NutritionData.class
+dev\stat\chat\dto\NutritionEntryDto.class

@@ -53,7 +53,17 @@ public interface LlmRestClient {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record Part(
             String text,
-            FunctionCall functionCall
+            FunctionCall functionCall,
+            InlineData inlineData
+    ) {}
+
+    /**
+     * Inline data for images (Gemini vision support).
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record InlineData(
+            String mimeType,
+            String data
     ) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

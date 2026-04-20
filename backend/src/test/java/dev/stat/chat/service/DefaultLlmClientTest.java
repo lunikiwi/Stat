@@ -294,11 +294,77 @@ class DefaultLlmClientTest {
                 .withRequestBody(containing("systemInstruction"))
                 .withRequestBody(containing("AI Coach"))
                 .withRequestBody(containing("Fettabbau")));
-    }
+   }
 
-    /**
-     * Test profile to configure WireMock URL for Gemini.
-     */
+   @Test
+   void shouldSendWeightAndWaterFunctionDeclarationsInRequest() {
+       // Arrange: Mock Gemini API response
+       wireMockServer.stubFor(post(urlPathMatching("/v1beta/models/gemini-2.5-flash:generateContent"))
+               .withQueryParam("key", equalTo("test-key"))
+               .withHeader("Content-Type", equalTo("application/json"))
+               .willReturn(aResponse()
+                       .withStatus(200)
+                       .withHeader("Content-Type", "application/json")
+                       .withBody("""
+                               {
+                                 "candidates": [{
+                                   "content": {
+                                     "parts": [{
+                                       "text": "Gewicht erfasst!"
+                                     }]
+                                   },
+                                   "finishReason": "STOP"
+                                 }]
+                               }
+                               """)));
+
+       // Act
+       String prompt = "Ich wiege jetzt 75.5kg";
+       llmClient.chat(prompt);
+
+       // Assert: Verify log_weight and log_water function declarations were sent
+       wireMockServer.verify(postRequestedFor(urlPathMatching("/v1beta/models/gemini-2.5-flash:generateContent"))
+               .withRequestBody(containing("log_weight"))
+               .withRequestBody(containing("weight_kg"))
+               .withRequestBody(containing("log_water"))
+               .withRequestBody(containing("amount_ml")));
+   }
+
+   @Test
+   void shouldSendGetNutritionDetailsFunctionDeclarationInRequest() {
+       // Arrange: Mock Gemini API response
+       wireMockServer.stubFor(post(urlPathMatching("/v1beta/models/gemini-2.5-flash:generateContent"))
+               .withQueryParam("key", equalTo("test-key"))
+               .withHeader("Content-Type", equalTo("application/json"))
+               .willReturn(aResponse()
+                       .withStatus(200)
+                       .withHeader("Content-Type", "application/json")
+                       .withBody("""
+                               {
+                                 "candidates": [{
+                                   "content": {
+                                     "parts": [{
+                                       "text": "Du hast heute bereits 3 Mahlzeiten geloggt."
+                                     }]
+                                   },
+                                   "finishReason": "STOP"
+                                 }]
+                               }
+                               """)));
+
+       // Act
+       String prompt = "Was habe ich heute schon gegessen?";
+       llmClient.chat(prompt);
+
+       // Assert: Verify get_nutrition_details function declaration was sent
+       wireMockServer.verify(postRequestedFor(urlPathMatching("/v1beta/models/gemini-2.5-flash:generateContent"))
+               .withRequestBody(containing("get_nutrition_details"))
+               .withRequestBody(containing("Retrieves today's individual nutrition entries")));
+   }
+
+   /**
+    * Test profile to configure WireMock URL for Gemini.
+    */
     public static class LlmTestProfile implements QuarkusTestProfile {
         @Override
         public Map<String, String> getConfigOverrides() {
