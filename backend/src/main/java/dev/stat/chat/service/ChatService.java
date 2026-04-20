@@ -167,11 +167,18 @@ public class ChatService {
         sb.append("- Reference specific metrics when making recommendations.\n");
         sb.append("- Keep responses concise and focused on the user's goal.\n\n");
 
-        sb.append("## Nutrition Logging Rules\n");
-        sb.append("- When the user mentions food items, ALWAYS estimate the macros yourself and use log_nutrition.\n");
-        sb.append("- NEVER ask the user for calorie or macro values - you must estimate them.\n");
-        sb.append("- Use get_nutrition_details when the user asks about already logged meals or wants a summary of individual entries.\n");
-        sb.append("- Be confident in your estimations based on typical portion sizes.\n\n");
+        sb.append("## WICHTIGE REGEL FÜR MAHLZEITEN\n");
+        sb.append("Analysiere bei Lebensmitteln IMMER zuerst die Absicht des Users:\n\n");
+        sb.append("**TRACKING (Neu eintragen):** Der User sagt, was er gegessen hat UND will es ins Tagebuch aufnehmen ");
+        sb.append("(z.B. \"ich esse gerade...\", \"habe gerade gegessen...\").\n");
+        sb.append("→ Schätze die Makros selbstständig und rufe log_nutrition auf.\n\n");
+        sb.append("**DISKUSSION / REFERENZ:** Der User bezieht sich auf eine Mahlzeit aus der Vergangenheit ");
+        sb.append("(z.B. \"wie du weißt, habe ich vorhin...\", \"passt das Ei von vorhin...\") ");
+        sb.append("oder stellt eine fachliche Frage dazu.\n");
+        sb.append("→ RUFE UNTER KEINEN UMSTÄNDEN log_nutrition AUF! ");
+        sb.append("Nutze stattdessen dein Wissen oder das Tool get_nutrition_details, um in der Datenbank nachzusehen, ");
+        sb.append("was geloggt wurde, und beantworte dann detailliert seine Frage ");
+        sb.append("(z.B. ob das eine gute Vorbereitung für den Lauf ist).\n\n");
 
         sb.append("## Trend Analysis\n");
         sb.append("- You have access to 7-day averages for key metrics.\n");
